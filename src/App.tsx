@@ -4,7 +4,9 @@ import { supabase } from './lib/supabase';
 
 import { LoginScreen } from './components/auth/LoginScreen';
 import { RegisterScreen } from './components/auth/RegisterScreen';
+import { ForgotPasswordScreen } from './components/auth/ForgotPasswordScreen';
 
+import { AdminDashboardScreen } from './components/admin/AdminDashboardScreen';
 import { StudentDashboardScreen } from './components/student/StudentDashboardScreen';
 import { CourseDetailsScreen } from './components/student/CourseDetailsScreen';
 import { LessonPlayerScreen } from './components/student/LessonPlayerScreen';
@@ -16,13 +18,15 @@ import { ManageModulesScreen } from './components/teacher/ManageModulesScreen';
 
 import { ProfileScreen } from './components/profile/ProfileScreen';
 
-type UserRole = 'student' | 'teacher';
+type UserRole = 'student' | 'teacher' | 'admin';
 
 type ScreenType =
   | 'login'
   | 'register'
+  | 'recover_password'
   | 'student_dashboard'
   | 'teacher_dashboard'
+  | 'admin_dashboard'
   | 'course_details'
   | 'lesson'
   | 'profile'
@@ -38,13 +42,19 @@ interface User {
 }
 
 function App() {
-  const [currentScreen, setCurrentScreen] =
-    useState<ScreenType>('login');
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
+  
+  // Estado global do tema (dark / light)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const [user, setUser] = useState<User>({
-    name: '',
-    email: '',
-    role: 'student',
+    name: 'Administrador Teste',
+    email: 'admin@prisma.com',
+    role: 'admin',
     bio: 'Desenvolvedor em formação apaixonado por tecnologia e design.',
   });
 
@@ -89,10 +99,7 @@ function App() {
       return;
     }
 
-    const role: UserRole =
-      profile.role === 'teacher'
-        ? 'teacher'
-        : 'student';
+    const role: UserRole = profile.role as UserRole;
 
     setUser({
       name: profile.nome,
@@ -101,7 +108,9 @@ function App() {
       bio: 'Desenvolvedor em formação apaixonado por tecnologia e design.',
     });
 
-    if (role === 'teacher') {
+    if (role === 'admin') {
+      setCurrentScreen('admin_dashboard');
+    } else if (role === 'teacher') {
       setCurrentScreen('teacher_dashboard');
     } else {
       setCurrentScreen('student_dashboard');
@@ -113,46 +122,49 @@ function App() {
   // ==========================================
 
   const handleRegister = async (
-  name: string,
-  email: string,
-  password: string,
-  role: UserRole
-) => {
-  const { data, error } =
-    await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          nome: name,
-          role: role,
+    name: string,
+    email: string,
+    password: string,
+    role: UserRole
+  ) => {
+    const { data, error } =
+      await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            nome: name,
+            role: role,
+          },
         },
-      },
+      });
+
+    if (error) {
+      alert(`Erro ao criar conta: ${error.message}`);
+      return;
+    }
+
+    if (!data.user) {
+      alert('Não foi possível criar o usuário.');
+      return;
+    }
+
+    setUser({
+      name,
+      email,
+      role,
+      bio: 'Desenvolvedor em formação apaixonado por tecnologia e design.',
     });
 
-  if (error) {
-    alert(`Erro ao criar conta: ${error.message}`);
-    return;
-  }
+    if (role === 'admin') {
+      setCurrentScreen('admin_dashboard');
+    } else if (role === 'teacher') {
+      setCurrentScreen('teacher_dashboard');
+    } else {
+      setCurrentScreen('student_dashboard');
+    }
+  };
 
-  if (!data.user) {
-    alert('Não foi possível criar o usuário.');
-    return;
-  }
-
-  setUser({
-    name,
-    email,
-    role,
-    bio: 'Desenvolvedor em formação apaixonado por tecnologia e design.',
-  });
-
-  if (role === 'teacher') {
-    setCurrentScreen('teacher_dashboard');
-  } else {
-    setCurrentScreen('student_dashboard');
-  }
-};
   // ==========================================
   // LOGOUT
   // ==========================================
@@ -203,7 +215,7 @@ function App() {
   };
 
   // ==========================================
-  // LOGIN
+  // RENDERIZAÇÃO DE ECRÃS
   // ==========================================
 
   if (currentScreen === 'login') {
@@ -213,13 +225,12 @@ function App() {
         onNavigateToRegister={() =>
           setCurrentScreen('register')
         }
+        onNavigateToForgotPassword={() =>
+          setCurrentScreen('recover_password')
+        }
       />
     );
   }
-
-  // ==========================================
-  // CADASTRO
-  // ==========================================
 
   if (currentScreen === 'register') {
     return (
@@ -232,15 +243,20 @@ function App() {
     );
   }
 
-  // ==========================================
-  // DASHBOARD DO ALUNO
-  // ==========================================
-
-  if (currentScreen === 'student_dashboard') {
+  if (currentScreen === 'recover_password') {
     return (
-      <StudentDashboardScreen
+      <ForgotPasswordScreen
+        onNavigateToLogin={() =>
+          setCurrentScreen('login')
+        }
+      />
+    );
+  }
+
+  if (currentScreen === 'admin_dashboard') {
+    return (
+      <AdminDashboardScreen
         userName={user.name}
-        onSelectCourse={handleSelectCourse}
         onNavigateToProfile={() =>
           setCurrentScreen('profile')
         }
@@ -249,9 +265,20 @@ function App() {
     );
   }
 
-  // ==========================================
-  // DETALHES DO CURSO
-  // ==========================================
+  if (currentScreen === 'student_dashboard') {
+    return (
+      <StudentDashboardScreen
+        userName={user.name}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onSelectCourse={handleSelectCourse}
+        onNavigateToProfile={() =>
+          setCurrentScreen('profile')
+        }
+        onLogout={handleLogout}
+      />
+    );
+  }
 
   if (currentScreen === 'course_details') {
     return (
@@ -267,10 +294,6 @@ function App() {
     );
   }
 
-  // ==========================================
-  // AULA
-  // ==========================================
-
   if (currentScreen === 'lesson') {
     return (
       <LessonPlayerScreen
@@ -285,23 +308,16 @@ function App() {
     );
   }
 
-  // ==========================================
-  // QUIZ
-  // ==========================================
-
   if (currentScreen === 'quiz') {
     return (
       <QuizScreen
+        courseTitle={selectedCourseTitle}
         onBack={() =>
           setCurrentScreen('lesson')
         }
       />
     );
   }
-
-  // ==========================================
-  // DASHBOARD DO PROFESSOR
-  // ==========================================
 
   if (currentScreen === 'teacher_dashboard') {
     return (
@@ -321,10 +337,6 @@ function App() {
     );
   }
 
-  // ==========================================
-  // CRIAR CURSO
-  // ==========================================
-
   if (currentScreen === 'create_course') {
     return (
       <CreateCourseScreen
@@ -334,10 +346,6 @@ function App() {
       />
     );
   }
-
-  // ==========================================
-  // GERENCIAR MÓDULOS
-  // ==========================================
 
   if (currentScreen === 'manage_modules') {
     return (
@@ -349,18 +357,18 @@ function App() {
     );
   }
 
-  // ==========================================
-  // PERFIL
-  // ==========================================
-
   if (currentScreen === 'profile') {
     return (
       <ProfileScreen
         user={user}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         onSave={handleSaveProfile}
         onBack={() => {
           if (user.role === 'teacher') {
             setCurrentScreen('teacher_dashboard');
+          } else if (user.role === 'admin') {
+            setCurrentScreen('admin_dashboard');
           } else {
             setCurrentScreen('student_dashboard');
           }

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface Course {
   id: number;
   title: string;
@@ -7,6 +9,8 @@ interface Course {
 
 interface StudentDashboardScreenProps {
   userName: string;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
   onSelectCourse: (courseTitle: string) => void;
   onNavigateToProfile: () => void;
   onLogout: () => void;
@@ -14,6 +18,8 @@ interface StudentDashboardScreenProps {
 
 export function StudentDashboardScreen({
   userName,
+  theme = 'dark',
+  onToggleTheme,
   onSelectCourse,
   onNavigateToProfile,
   onLogout,
@@ -45,27 +51,47 @@ export function StudentDashboardScreen({
     },
   ];
 
-  return (
-    <div className="min-h-screen bg-[#0b0e13] text-white">
-      <header className="bg-[#212127] border-b border-gray-800 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold">PRISMA</h1>
+  const isDark = theme === 'dark';
+  const bgMain = isDark ? 'bg-[#0b0e13] text-white' : 'bg-gray-50 text-gray-900';
+  const headerBg = isDark ? 'bg-[#212127] border-gray-800' : 'bg-white border-gray-200 shadow-sm';
+  const cardBg = isDark ? 'bg-[#212127] border-gray-800' : 'bg-white border-gray-200 shadow-md';
+  const textColorMuted = isDark ? 'text-gray-400' : 'text-gray-600';
+  const textColorMain = isDark ? 'text-gray-300' : 'text-gray-800';
 
-          <div className="flex items-center gap-4">
-            <span className="text-gray-300">
+  return (
+    <div className={`min-h-screen transition-colors duration-200 ${bgMain}`}>
+      <header className={`${headerBg} border-b px-6 py-4 transition-colors duration-200`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-wider">PRISMA</h1>
+
+          <div className="flex items-center gap-5">
+            <span className={`text-sm font-medium ${textColorMain}`}>
               Olá, {userName}
             </span>
 
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                className={`px-3 py-1.5 rounded-xl font-semibold text-xs transition shadow-sm flex items-center gap-1.5 ${
+                  isDark
+                    ? 'bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-gray-700'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                }`}
+              >
+                {isDark ? '☀️ Claro' : '🌙 Escuro'}
+              </button>
+            )}
+
             <button
               onClick={onNavigateToProfile}
-              className="text-blue-400 hover:text-blue-300"
+              className="text-blue-400 hover:text-blue-300 text-sm font-semibold transition"
             >
               Perfil
             </button>
 
             <button
               onClick={onLogout}
-              className="text-red-400 hover:text-red-300"
+              className="text-red-400 hover:text-red-300 text-sm font-semibold transition"
             >
               Sair
             </button>
@@ -79,7 +105,7 @@ export function StudentDashboardScreen({
             Bem-vindo ao PRISMA!
           </h2>
 
-          <p className="text-gray-400">
+          <p className={textColorMuted}>
             Continue seus estudos e acompanhe seu progresso.
           </p>
         </div>
@@ -92,43 +118,47 @@ export function StudentDashboardScreen({
           {courses.map((course) => (
             <div
               key={course.id}
-              className="bg-[#212127] rounded-xl p-5 border border-gray-800 hover:border-blue-500 transition"
+              className={`${cardBg} rounded-2xl p-5 border hover:border-blue-500 transition shadow-lg flex flex-col justify-between`}
             >
-              <h4 className="text-xl font-bold mb-3">
-                {course.title}
-              </h4>
+              <div>
+                <h4 className="text-xl font-bold mb-3">
+                  {course.title}
+                </h4>
 
-              <p className="text-gray-400 text-sm mb-5">
-                {course.description}
-              </p>
-
-              <div className="mb-3">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">
-                    Progresso
-                  </span>
-
-                  <span className="text-gray-300">
-                    {course.progress}%
-                  </span>
-                </div>
-
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{
-                      width: `${course.progress}%`,
-                    }}
-                  />
-                </div>
+                <p className={`${textColorMuted} text-sm mb-5 leading-relaxed`}>
+                  {course.description}
+                </p>
               </div>
 
-              <button
-                onClick={() => onSelectCourse(course.title)}
-                className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold"
-              >
-                Acessar curso
-              </button>
+              <div>
+                <div className="mb-3">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className={textColorMuted}>
+                      Progresso
+                    </span>
+
+                    <span className={textColorMain}>
+                      {course.progress}%
+                    </span>
+                  </div>
+
+                  <div className="w-full bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${course.progress}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onSelectCourse(course.title)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-semibold transition shadow-md"
+                >
+                  Acessar curso
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -3,11 +3,13 @@ import { useState, type FormEvent } from 'react';
 interface LoginScreenProps {
   onLogin: (email: string, password: string) => Promise<void>;
   onNavigateToRegister: () => void;
+  onNavigateToForgotPassword: () => void;
 }
 
 export function LoginScreen({
   onLogin,
   onNavigateToRegister,
+  onNavigateToForgotPassword,
 }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,9 +59,18 @@ export function LoginScreen({
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-2">
-                Senha
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm text-gray-300">
+                  Senha
+                </label>
+                <button
+                  type="button"
+                  onClick={onNavigateToForgotPassword}
+                  className="text-xs text-blue-400 hover:text-blue-300 transition"
+                >
+                  Esqueceu-se da senha?
+                </button>
+              </div>
 
               <input
                 type="password"
