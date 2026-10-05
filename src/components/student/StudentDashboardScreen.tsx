@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-
 import { supabase } from '../../lib/supabase';
 
 interface Course {
@@ -41,18 +40,13 @@ export function StudentDashboardScreen({
 
       const { data, error } = await supabase
         .from('courses')
-        .select(
-          'id, title, description, image_url'
-        )
+        .select('id, title, description, image_url')
         .order('created_at', {
           ascending: false,
         });
 
       if (error) {
-        console.error(
-          'Erro ao carregar cursos:',
-          error
-        );
+        console.error('Erro ao carregar cursos:', error);
 
         setErrorMessage(
           `Não foi possível carregar os cursos: ${error.message}`
@@ -60,7 +54,6 @@ export function StudentDashboardScreen({
 
         setCourses([]);
         setLoading(false);
-
         return;
       }
 
@@ -84,14 +77,14 @@ export function StudentDashboardScreen({
 
   const bgMain = isDark
     ? 'bg-[#0b0e13] text-white'
-    : 'bg-gray-50 text-gray-900';
+    : 'bg-[#f4f6f9] text-gray-900';
 
   const headerBg = isDark
-    ? 'bg-[#212127] border-gray-800'
+    ? 'bg-[#181b22] border-gray-800'
     : 'bg-white border-gray-200 shadow-sm';
 
   const cardBg = isDark
-    ? 'bg-[#212127] border-gray-800'
+    ? 'bg-[#181b22] border-gray-800'
     : 'bg-white border-gray-200 shadow-md';
 
   const textColorMuted = isDark
@@ -99,28 +92,31 @@ export function StudentDashboardScreen({
     : 'text-gray-600';
 
   const textColorMain = isDark
-    ? 'text-gray-300'
+    ? 'text-gray-200'
     : 'text-gray-800';
 
   return (
     <div
       className={`min-h-screen transition-colors duration-200 ${bgMain}`}
     >
+      {/* Cabeçalho inspirado no modelo PRISMA APRENDIZADO */}
       <header
-        className={`${headerBg} border-b px-6 py-4 transition-colors duration-200`}
+        className={`${headerBg} border-b px-8 py-5 transition-colors duration-200`}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-wider">
-            PRISMA
-          </h1>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
+              <span className="text-white font-bold text-lg">
+                P
+              </span>
+            </div>
 
-          <div className="flex items-center gap-5">
-            <span
-              className={`text-sm font-medium ${textColorMain}`}
-            >
-              Olá, {userName}
+            <span className="font-extrabold tracking-wide text-lg">
+              PRISMA APRENDIZADO
             </span>
+          </div>
 
+          <div className="flex items-center gap-6">
             {onToggleTheme && (
               <button
                 onClick={onToggleTheme}
@@ -130,17 +126,21 @@ export function StudentDashboardScreen({
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                 }`}
               >
-                {isDark
-                  ? '☀️ Claro'
-                  : '🌙 Escuro'}
+                {isDark ? '☀️ Claro' : '🌙 Escuro'}
               </button>
             )}
 
             <button
               onClick={onNavigateToProfile}
-              className="text-blue-400 hover:text-blue-300 text-sm font-semibold transition"
+              className={`flex items-center gap-2 text-sm font-semibold transition ${textColorMain} hover:text-blue-500`}
             >
-              Perfil
+              <span>Meu perfil</span>
+
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow">
+                {userName
+                  ? userName.charAt(0).toUpperCase()
+                  : 'U'}
+              </div>
             </button>
 
             <button
@@ -153,26 +153,33 @@ export function StudentDashboardScreen({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
+      <main className="max-w-7xl mx-auto px-8 py-10">
+        {/* Mensagem de Boas-Vindas Aprimorada */}
+        <div className="mb-10 bg-gradient-to-r from-blue-600/10 via-blue-600/5 to-transparent p-6 rounded-2xl border border-blue-500/20">
           <h2 className="text-3xl font-bold mb-2">
-            Bem-vindo ao PRISMA!
+            Olá, {userName}! 👋
           </h2>
 
-          <p className={textColorMuted}>
-            Continue seus estudos e acompanhe seu
-            progresso.
+          <p
+            className={`${textColorMuted} text-base`}
+          >
+            É ótimo ter você de volta no{' '}
+            <strong className="text-blue-500">
+              Prisma Aprendizado
+            </strong>
+            . Continue a sua jornada de evolução profissional
+            hoje.
           </p>
         </div>
 
         <h3 className="text-2xl font-bold mb-6">
-          Cursos disponíveis
+          Meus Cursos
         </h3>
 
         {loading && (
-          <div className="py-10 text-center">
+          <div className="py-12 text-center">
             <p className={textColorMuted}>
-              Carregando cursos...
+              Carregando cursos disponíveis...
             </p>
           </div>
         )}
@@ -188,14 +195,16 @@ export function StudentDashboardScreen({
         {!loading &&
           !errorMessage &&
           courses.length === 0 && (
-            <div className="bg-[#212127] border border-gray-800 rounded-xl p-8 text-center">
+            <div
+              className={`${cardBg} border rounded-2xl p-10 text-center shadow-lg`}
+            >
               <h3 className="text-xl font-bold mb-2">
                 Nenhum curso disponível
               </h3>
 
               <p className={textColorMuted}>
-                Ainda não existem cursos cadastrados
-                na plataforma.
+                Ainda não existem cursos cadastrados na
+                plataforma.
               </p>
             </div>
           )}
@@ -207,46 +216,48 @@ export function StudentDashboardScreen({
               {courses.map((course) => (
                 <div
                   key={course.id}
-                  className={`${cardBg} rounded-2xl p-5 border hover:border-blue-500 transition shadow-lg flex flex-col justify-between`}
+                  className={`${cardBg} rounded-2xl p-5 border hover:border-blue-500/60 transition-all duration-200 shadow-xl flex flex-col justify-between h-full group`}
                 >
                   <div>
-                    {course.image_url && (
+                    {course.image_url ? (
                       <img
                         src={course.image_url}
                         alt={course.title}
-                        className="w-full h-40 object-cover rounded-xl mb-4"
+                        className="w-full h-36 object-cover rounded-xl mb-4 group-hover:scale-[1.02] transition-transform duration-200"
                       />
+                    ) : (
+                      <div className="w-full h-36 bg-blue-600/10 border border-blue-500/20 rounded-xl mb-4 flex items-center justify-center text-blue-400 font-bold text-xl">
+                        {course.title
+                          .substring(0, 2)
+                          .toUpperCase()}
+                      </div>
                     )}
 
-                    <h4 className="text-xl font-bold mb-3">
+                    <h4 className="text-lg font-bold mb-2">
                       {course.title}
                     </h4>
 
                     <p
-                      className={`${textColorMuted} text-sm mb-5 leading-relaxed`}
+                      className={`${textColorMuted} text-xs mb-5 leading-relaxed line-clamp-3`}
                     >
                       {course.description ||
-                        'Curso disponível no PRISMA.'}
+                        'Conteúdo completo estruturado para o seu desenvolvimento prático.'}
                     </p>
                   </div>
 
                   <div>
-                    <div className="mb-3">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span
-                          className={textColorMuted}
-                        >
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs mb-1.5 font-medium">
+                        <span className={textColorMuted}>
                           Progresso
                         </span>
 
-                        <span
-                          className={textColorMain}
-                        >
+                        <span className={textColorMain}>
                           {course.progress}%
                         </span>
                       </div>
 
-                      <div className="w-full bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-gray-700/30 rounded-full h-2 overflow-hidden border border-gray-700/50">
                         <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{
@@ -263,9 +274,9 @@ export function StudentDashboardScreen({
                           course.title
                         )
                       }
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-semibold transition shadow-md"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-semibold text-sm transition shadow-lg shadow-blue-600/20"
                     >
-                      Acessar curso
+                      Acessar Curso
                     </button>
                   </div>
                 </div>
