@@ -17,6 +17,7 @@ import { CreateCourseScreen } from './components/teacher/CreateCourseScreen';
 import { ManageModulesScreen } from './components/teacher/ManageModulesScreen';
 
 import { ProfileScreen } from './components/profile/ProfileScreen';
+import { ManageLessonsScreen } from './components/teacher/ManageLessonsScreen';
 
 type UserRole = 'student' | 'teacher' | 'admin';
 
@@ -32,9 +33,11 @@ type ScreenType =
   | 'profile'
   | 'create_course'
   | 'manage_modules'
-  | 'quiz';
+  | 'quiz'
+  | 'manage_lessons';
 
 interface User {
+  id: string;
   name: string;
   email: string;
   role: UserRole;
@@ -42,28 +45,40 @@ interface User {
 }
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
-  
-  // Estado global do tema (dark / light)
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [currentScreen, setCurrentScreen] =
+    useState<ScreenType>('login');
+
+  const [theme, setTheme] =
+    useState<'dark' | 'light'>('dark');
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) =>
+      prev === 'dark' ? 'light' : 'dark'
+    );
   };
 
   const [user, setUser] = useState<User>({
+    id: '',
     name: 'Administrador Teste',
     email: 'admin@prisma.com',
     role: 'admin',
     bio: 'Desenvolvedor em formação apaixonado por tecnologia e design.',
   });
 
+  const [selectedCourseId, setSelectedCourseId] =
+    useState('');
+
   const [selectedCourseTitle, setSelectedCourseTitle] =
     useState('UX/UI Design');
 
-  // ==========================================
-  // LOGIN
-  // ==========================================
+  const [selectedModuleId, setSelectedModuleId] =
+    useState('');
+
+  const [selectedModuleTitle, setSelectedModuleTitle] =
+    useState('');
+
+  const [selectedLessonId, setSelectedLessonId] =
+    useState('');
 
   const handleLogin = async (
     email: string,
@@ -99,9 +114,15 @@ function App() {
       return;
     }
 
-    const role: UserRole = profile.role as UserRole;
+    const role: UserRole =
+      profile.role === 'professor'
+        ? 'teacher'
+        : profile.role === 'admin'
+          ? 'admin'
+          : 'student';
 
     setUser({
+      id: data.user.id,
       name: profile.nome,
       email: profile.email,
       role,
@@ -116,10 +137,6 @@ function App() {
       setCurrentScreen('student_dashboard');
     }
   };
-
-  // ==========================================
-  // CADASTRO
-  // ==========================================
 
   const handleRegister = async (
     name: string,
@@ -150,6 +167,7 @@ function App() {
     }
 
     setUser({
+      id: data.user.id,
       name,
       email,
       role,
@@ -165,10 +183,6 @@ function App() {
     }
   };
 
-  // ==========================================
-  // LOGOUT
-  // ==========================================
-
   const handleLogout = async () => {
     const { error } =
       await supabase.auth.signOut();
@@ -179,18 +193,21 @@ function App() {
     }
 
     setUser({
+      id: '',
       name: '',
       email: '',
       role: 'student',
       bio: '',
     });
 
+    setSelectedCourseId('');
+    setSelectedCourseTitle('');
+    setSelectedModuleId('');
+    setSelectedModuleTitle('');
+    setSelectedLessonId('');
+
     setCurrentScreen('login');
   };
-
-  // ==========================================
-  // PERFIL
-  // ==========================================
 
   const handleSaveProfile = (
     name: string,
@@ -203,20 +220,32 @@ function App() {
     }));
   };
 
-  // ==========================================
-  // NAVEGAÇÃO
-  // ==========================================
-
   const handleSelectCourse = (
+    courseId: string,
     courseTitle: string
   ) => {
+    setSelectedCourseId(courseId);
     setSelectedCourseTitle(courseTitle);
     setCurrentScreen('course_details');
   };
 
-  // ==========================================
-  // RENDERIZAÇÃO DE ECRÃS
-  // ==========================================
+  const handleManageModules = (
+    courseId: string,
+    courseTitle: string
+  ) => {
+    setSelectedCourseId(courseId);
+    setSelectedCourseTitle(courseTitle);
+    setCurrentScreen('manage_modules');
+  };
+
+  const handleManageLessons = (
+    moduleId: string,
+    moduleTitle: string
+  ) => {
+    setSelectedModuleId(moduleId);
+    setSelectedModuleTitle(moduleTitle);
+    setCurrentScreen('manage_lessons');
+  };
 
   if (currentScreen === 'login') {
     return (
@@ -283,13 +312,15 @@ function App() {
   if (currentScreen === 'course_details') {
     return (
       <CourseDetailsScreen
+        courseId={selectedCourseId}
         courseTitle={selectedCourseTitle}
         onBack={() =>
           setCurrentScreen('student_dashboard')
         }
-        onStartLesson={() =>
-          setCurrentScreen('lesson')
-        }
+        onStartLesson={(moduleId) => {
+          setSelectedModuleId(moduleId);
+          setCurrentScreen('lesson');
+        }}
       />
     );
   }
@@ -298,6 +329,8 @@ function App() {
     return (
       <LessonPlayerScreen
         courseTitle={selectedCourseTitle}
+        moduleId={selectedModuleId}
+        theme={theme}
         onBack={() =>
           setCurrentScreen('course_details')
         }
@@ -323,12 +356,11 @@ function App() {
     return (
       <TeacherDashboardScreen
         userName={user.name}
+        userId={user.id}
         onCreateCourse={() =>
           setCurrentScreen('create_course')
         }
-        onManageModules={() =>
-          setCurrentScreen('manage_modules')
-        }
+        onManageModules={handleManageModules}
         onNavigateToProfile={() =>
           setCurrentScreen('profile')
         }
@@ -340,6 +372,7 @@ function App() {
   if (currentScreen === 'create_course') {
     return (
       <CreateCourseScreen
+        userId={user.id}
         onBack={() =>
           setCurrentScreen('teacher_dashboard')
         }
@@ -350,8 +383,23 @@ function App() {
   if (currentScreen === 'manage_modules') {
     return (
       <ManageModulesScreen
+        courseId={selectedCourseId}
+        courseTitle={selectedCourseTitle}
+        onManageLessons={handleManageLessons}
         onBack={() =>
           setCurrentScreen('teacher_dashboard')
+        }
+      />
+    );
+  }
+
+  if (currentScreen === 'manage_lessons') {
+    return (
+      <ManageLessonsScreen
+        moduleId={selectedModuleId}
+        moduleTitle={selectedModuleTitle}
+        onBack={() =>
+          setCurrentScreen('manage_modules')
         }
       />
     );
